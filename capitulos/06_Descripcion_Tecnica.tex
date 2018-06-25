@@ -1,0 +1,474 @@
+\chapter{Descripción técnica.} \label{ch:tecnica}
+
+En este capítulo vamos a ver un par de aspectos técnicos empleados en el desarrollo del proyecto y como un pequeño manual de usuario que permita recrear parte de los experimentos mostrados en este documento. 
+
+\section{Indices.} \label{sec:indices}
+
+Como se comentó en el capítulo \ref{ch:planificacion_disenio}, uno de los requisitos de este proyecto es mantener los datos intactos siempre que se pueda y, para ello, los algoritmos trabajan con índices en vez de con los propios datos. \textit{Scala} proporciona una manera muy elegante de acceder a los elementos de una colección dado un índice. Por ejemplo, para acceder a los elementos \textit{0, 3 y 4} de un vector con los elementos \textit{0, 10, 20, 30, 40, 50}, solo debemos usar la función \textit{map}:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+scala> val indice = Array(0, 3, 4)
+scala> val data = Array(0, 10, 20, 30, 40, 50)
+scala> indice map data
+res0: Array[Int] = Array(0, 30, 40)
+\end{lstlisting} 
+
+Otra función muy interesante para recorrer una colección es \textit{zipWithIndex}. Dicha función aplicada sobre una colección devuelve una colección donde los elementos están formados por el elemento original y su índice dentro de dicha colección. Veamos un ejemplo:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+scala> val data = Array(0, 10, 20, 30)
+scala> data.zipWithIndex
+res0: Array[(Int, Int)] = Array((0,0), (10,1), (20,2), (30,3))
+\end{lstlisting} 
+
+Jugando con estas dos funciones, el trabajo con índices es bastante sencillo y elegante, siendo esta la metodología usada en este proyecto.
+
+\section{Implementación de los algoritmos.} \label{sec:implementacion_algoritmos}
+
+En esta sección vamos a comentar los aspectos de implementación de los algoritmos desarrollados en esta biblioteca. Cabe destacar que todos los algoritmos se ejecutan llamando al método \textit{sample} de la clase correspondiente. Este método varía en los argumentos que recibe —ya que cada uno de ellos necesita unos argumentos concretos—. Para facilitar el uso de esta biblioteca al usuario todos los argumentos usados en todos los algoritmos tienen un valor por defecto, para no forzar a que el usuario deba entender o conocer el algoritmo para así poder decidir que valores usar. Todos los algoritmos devuelven el mismo objeto \textit{Data} que se ha usado como entrada pero con el resultado calculado asignado a los atributos \textit{\_resultData}, \textit{\_resultClasses} y \textit{\_index}. \\
+
+Todos los algoritmos nos permiten obtener información acerca de la ejecución en un fichero de texto gracias a la clase \textit{Logger} implementada en el paquete \textit{io}. Para ellos, los algoritmos esperan un parámetro llamado \textit{file} de tipo \textit{Option[String]}. Un \textit{Option} en \textit{Scala} puede tomar dos valores: \textit{None} para indicar la ausencia de valor o \textit{Some(X)} donde \textit{X} es un objeto del tipo definido por el \textit{Option}. Si a los algoritmos le pasamos \textit{None} en dicho parámetro no se realizará ninguna operación de \textit{log}. Si pasamos un \textit{Option(nombreFichero)} se realizará almacenará información acerca de la ejecución del algoritmo en un fichero —que se creará si no existe— llamado \textit{nombreFichero}. \\
+
+En esta sección vamos a ver las cabeceras y los distintos argumentos de cada algoritmo. Para facilitar esta documentación al usuario, se ha desarrollado una página web con la documentación del proyecto. Se ha utilizado \textit{Scaladoc} \cite{scaladoc} para documentar el código. Una vez está todo el código documentado, solo debemos ejecutar \textit{sbt doc} para generar una página web con toda la documentación. Dicha página web está alojada en \textit{GitHub Pages} \cite{github-pages} y se puede acceder a ella en la dirección \href{https://nestorrv.github.io}{https://nestorrv.github.io}.
+
+\subsection{Logger.} \label{sec:logger}
+
+\textit{Logger} es una clase diseñada para almacenar información de como está funcionando la ejecución de un algoritmo y, al finalizar el mismo, guardarla en un fichero de texto. En dicho fichero se almacena información acerca del tamaño del conjunto de datos, de su \textit{Imbalanced Ratio}, del tiempo de ejecución y cualquier información relevante acerca del algoritmo.
+
+\subsection{Data.} \label{sec:data}
+
+Como se comento en la sección \ref{sec:planificacion} todos los algoritmos hacen uso de la clase \textit{Data} para poder almacenar la información necesaria para el funcionamiento de los algoritmos. Dicha clase es muy sencilla, solo contiene los atributos necesarios para almacenar toda la información y varios métodos para acceder a los atributos. La información almacenada por \textit{Data} es:
+
+\begin{itemize}
+    \item \textit{\_nominal}: objeto del tipo \textit{Array[Int]} indicando que atributos —columnas de la matrix de datos— son atributos nominales.
+    \item \textit{\_originalData}: objeto del tipo \textit{Array[Array[Any]]} que contiene el conjunto de datos original.
+    \item \textit{\_originalClasses}: objeto del tipo \textit{Array[Array[Any]]} que contiene las clases asociadas a \textit{\_originalData}.
+    \item \textit{\_fileInfo}: objeto del tipo \textit{FileInfo}. \textit{FileInfo} es una clase implementada en mi biblioteca que contiene información auxiliar del fichero leído, como puede ser el separador de elementos, la cadena que indica elemento vacío, la cabecera del fichero —incluyendo la información de los atributos representados por \textit{ARFF} \cite{arffwiki} si es que existe—, \textit{etcétera}.
+    \item \textit{\_processedData}: objeto del tipo \textit{Array[Array[Double]]} que representa los datos procesados para poder ser usados por mis algoritmos.
+    \item \textit{\_resultData}: objeto del tipo \textit{Array[Array[Any]]} en el cual se escribe el conjunto resultante de la ejecución de mis algoritmos.
+    \item \textit{\_resultClasses}: objeto del tipo \textit{Array[Any]} en el cual se escriben las clases asociadas a \textit{\_resultData}.
+    \item \textit{\_index}: objeto del tipo \textit{Array[Int]} que representa los índices de los elementos originales que han sido preservados por mis algoritmos. 
+\end{itemize}
+
+\subsection{Algorithm.} \label{sec:algorithm}
+
+En la sección \ref{sec:planificacion} también vimos que cada algoritmo ha sido implementado en una clase distinta, pero todas heredan de \textit{Algorithm}. \textit{Algorithm} es un \textit{trait}. Un \textit{trait} en \textit{Scala} \cite{trait-scala} es el equivalente a una interfaz en \textit{Java}. Permite definir un tipo de objeto especificando el comportamiento mediante métodos. Los \textit{traits} no pueden tener argumentos en el constructor pero, a diferencia de las interfaces de \textit{Java}, si pueden tener métodos implementados. \\
+
+La información almacenada por \textit{Algorithm} es:
+
+\begin{itemize}
+    \item \textit{data}: objeto de la clase \textit{Data} comentada en la sección \ref{sec:data}.
+    \item \textit{seed}: objeto del tipo \textit{Long} que representa la semilla a usar para inicializar el generador de números aleatorios. Si no se proporciona ninguna, se usan los milisegundos del sistema como semilla.
+    \item \textit{minorityClass}: objeto del tipo \textit{Any} que representa cual es la clase minoritaria para el usuario. Si no se proporciona ninguna, se asigna a \textit{-1} para funcionamiento interno de los algoritmos.
+    \item \textit{x}: objeto del tipo \textit{Array[Array[Double]]} que contiene los datos sin las clases.     
+    \item \textit{y}: objeto del tipo \textit{Array[Any]} que contiene las clases del conjunto de datos.
+    \item \textit{logger}: objeto del tipo \textit{Logger} implementado en mi biblioteca. Es una clase encargada de ir almacenando los mensajes de \textit{log} especificados por los algoritmos y escribirlos en un fichero de datos si el usuario ha activado esa opción.
+    \item \textit{counter}: objeto del tipo \textit{Map[Any, Int]} el cual almacena el número de instancias que hay en cada clase.
+    \item \textit{untouchableClass}: objeto del tipo \textit{Any} usado para representar la clase minoritaria del conjunto de datos. Si el objeto \textit{minorityClass} está especificado por el usuario, \textit{untouchableClass} toma su valor. En caso contrario, se calcula como la clase con menor número de instancias.
+    \item \textit{index}: objeto del tipo \textit{List[Int]} que representa un índice barajado de los datos, para aleatorizar el orden de los mismos.
+\end{itemize}
+
+\subsection{Clase BalanceCascade} \label{subsec:impl_balancecascade}
+
+Este algoritmo no se ha implementado siguiendo fielmente las indicaciones del \textit{paper} original sino que se ha implementado la versión propuesta en la biblioteca \textit{imbalanced-learn} \cite{imbalanced-learn}. El pseudocódigo implementado es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1] \label{pseudocode:bc}
+\Function {BalanceCascade}{conjunto de datos D, ratio}
+\State search = true 
+\State mask = \{true, ..., true\} // size(mask) == size(conjunto de datos)
+\While{search}
+\State \parbox[t]{305pt}{contadorClases = numero de instancias de cada clase de los elementos que tienen el valor de \textit{mask} a \textit{true}\strut}
+\For{c$_i$ $\in$ contadorClases}
+\State mismaClase = instancias de la misma clase que c$_i$
+\If{c$_i$ no es la clase minoritaria}
+\State \parbox[t]{275pt}{targetIndex = instancias de \textit{mismaClase} y que su valor de \textit{mask} está a \textit{true} \strut}
+\State instanciasMaj = instanciasMaj $\cup$ targetIndex
+\algstore{break}
+\end{algorithmic}
+\end{codigo}
+	
+\begin{codigo}
+\begin{algorithmic}[1]
+\algrestore{break}
+\Else
+\State \parbox[t]{275pt}{instanciasMinoritarias = mismaClase // guardamos todas las instancias minoritarias \strut}
+\EndIf
+\EndFor
+\State numeroSubSetsCreados += 1
+\If{numeroSubSetsCreados == maxSubSets}
+\State search = false
+\EndIf
+\State subset = targetIndex $\cup$ instanciasMinoritarias
+\State \parbox[t]{305pt}{prediction = predecimos las clases haciendo \textit{k-fold}\strut}
+\State \parbox[t]{305pt}{clasificadas = instancias bien clasificadas\strut}
+\State \parbox[t]{305pt}{ponemos los valores de \textit{mask} de las instancias bien clasificadas a \textit{false}\strut}
+\State \parbox[t]{305pt}{contadorClasesNuevo = numero de instancias de cada clase de los elementos que tienen el valor de \textit{mask} a \textit{true}\strut}
+\State \parbox[t]{305pt}{search = false si alguna clase de contadorClasesNuevo tiene menor número de instancias que la clase minoritaria\strut}
+\EndWhile
+\State \parbox[t]{305pt}{histogramaMayoritarias = histograma del número de ocurrencias de cada instancia mayoritaria en \textit{instanciasMaj} \strut}
+\State \parbox[t]{305pt}{N = $\left | instancias\ de\ la\ clase\ minoritaria \right |$ * ratio\strut}
+\State \parbox[t]{305pt}{salida = instancias de la clase minoritaria $\cup$ N instancias más ocurrentes basándonos en \textit{histogramaMayoritarias} \strut}
+\State \Return salida
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+Este algoritmo va creando los mismos subconjuntos que se crean en el conjunto original hasta que se hayan creado todos los posibles. Estos conjuntos se crean usando un clasificador —usando la técnica del vecino más cercano— así que mantiene la idea de usar un clasificador del \textit{paper} original. Finalmente nos quedamos con los elementos que más veces hayan aparecido en los \textit{subsets} y las instancias minoritarias. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, distance: Distances.Distance = Distances.EUCLIDEAN, k: Int = 3, nMaxSubsets: Int = 5, nFolds: Int = 5, ratio: Double = 1.0): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{distance:} indica el tipo de distancia a usar. Es un valor del enumerado \textit{Distances} implementado en el paquete \textit{util} de esta biblioteca.
+    \item \textit{k:} número de vecinos a usar al realizar la predicción de la línea \textit{20} del pseudocódigo mostrado en esta sección.
+    \item \textit{nMaxSubsets:} número máximo de subsets a crear.
+    \item \textit{nFolds:} número de folds a crear al realizar la predicción de la línea \textit{20} del pseudocódigo mostrado en esta sección.
+    \item \textit{ratio:} ratio indicando el número de instancias mayoritarias a coger. Se cogerán $\left | numero\ instancias\ minoritarias \right | \ *\ ratio$.
+\end{itemize}
+
+\subsection{Clase ClassPurityMaximization} \label{subsec:impl_classpuritymaximization}
+
+Este algoritmo se ha implementado como indica el \textit{paper} original. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, distance: Distances.Distance = Distances.EUCLIDEAN): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{distance:} indica el tipo de distancia a usar. Es un valor del enumerado \textit{Distances} implementado en el paquete \textit{util} de esta biblioteca.
+\end{itemize}
+
+\subsection{Clase ClusterOSS} \label{subsec:impl_clusteross}
+
+Este algoritmo se ha implementado como indica el \textit{paper} original. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, distance: Distances.Distance = Distances.EUCLIDEAN, k: Int = 3, numClusters: Int = 15, restarts: Int = 5, minDispersion: Double = 0.0001, maxIterations: Int = 100): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{distance:} indica el tipo de distancia a usar. Es un valor del enumerado \textit{Distances} implementado en el paquete \textit{util} de esta biblioteca.
+    \item \textit{k:} número de vecinos a usar al realizar la predicción de la línea \textit{20} del pseudocódigo mostrado en esta sección.
+    \item \textit{numClusters:} número de \textit{clústeres} a crear.
+    \item \textit{restarts:} número de veces a aplicar el algoritmo de clustering —el algoritmo se queda el mejor resultado de todas las ejecuciones—.
+    \item \textit{minDispersion:} si la dispersión tras una iteración del algoritmo \textit{kMeans} \cite{kmeans} es menor que este valor, se detiene la ejecución.
+    \item \textit{maxIterations:} número máximo de iteraciones permitidas para el algoritmo \textit{kMeans}.
+\end{itemize}
+
+\subsection{Clase CondensedNearestNeighbor} \label{subsec:impl_condensednearestneighbor}
+
+Este algoritmo se ha implementado como indica el \textit{paper} original. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, distance: Distances.Distance = Distances.EUCLIDEAN): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{distance:} indica el tipo de distancia a usar. Es un valor del enumerado \textit{Distances} implementado en el paquete \textit{util} de esta biblioteca.
+\end{itemize}
+
+\subsection{Clase EasyEnsemble} \label{subsec:impl_easyensemble}
+
+Este algoritmo no se ha implementado siguiendo fielmente las indicaciones del \textit{paper} original sino que se ha implementado la versión propuesta en la biblioteca \textit{imbalanced-learn}. El pseudocódigo implementado es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1] \label{pseudocode:bc}
+\Function {EasyEnsemble}{conjunto de datos D, nVeces, ratio}
+\State mayoritarias = $\{\}$
+\For{i $\leftarrow$ nVeces}
+\State \parbox[t]{305pt}{aux = coger aleatoriamente $\left | instancias\ minoritarias \right | \ *\ ratio$ instancias mayoritarias\strut}
+\State mayoritarias = mayoritarias $\cup$ aux
+\EndFor
+\State \parbox[t]{305pt}{histogramaMayoritarias = histograma del número de ocurrencias de cada instancia mayoritaria en \textit{mayoritarias} \strut}
+\State \parbox[t]{305pt}{N = $\left | instancias\ de\ la\ clase\ minoritaria \right |$ * ratio\strut}
+\State \parbox[t]{305pt}{salida = instancias de la clase minoritaria $\cup$ N instancias más ocurrentes basándonos en \textit{histogramaMayoritarias} \strut}
+\State \Return salida
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+La idea es hacer una mezcla se subconjuntos pero generados de forma aleatoria. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, ratio: Double = 1.0, replacement: Boolean = false, nTimes: Int = 5): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{ratio:} ratio indicando el número de instancias mayoritarias a coger. Se cogerán $\left | numero\ instancias\ minoritarias \right | \ *\ ratio$.
+    \item \textit{replacement:} indica si aplicar reemplazo o no a la hora de seleccionar los elementos mayoritarios en cada subconjunto. Si se aplica, una instancia puede ser seleccionada múltiples veces para el mismo subconjunto.
+    \item \textit{nTimes}: indica el número de subconjuntos a crear.
+\end{itemize}
+
+\subsection{Clase EditedNearestNeighbor} \label{subsec:impl_editednearestneighbor}
+
+Este algoritmo se ha implementado como indica el \textit{paper} original. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, distance: Distances.Distance = Distances.EUCLIDEAN, k: Int = 3): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{distance:} indica el tipo de distancia a usar. Es un valor del enumerado \textit{Distances} implementado en el paquete \textit{util} de esta biblioteca.
+    \item \textit{k:} número de vecinos a usar al realizar la predicción de las etiquetas.
+\end{itemize}
+
+\subsection{Clase EvolutionaryUnderSampling} \label{subsec:impl_evolutionaryundersampling}
+
+Este algoritmo se ha implementado como indica el \textit{paper} original. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, populationSize: Int = 50, maxEvaluations: Int = 1000, algorithm: String = "EBUSMSGM", distance: Distances.Distance = Distances.EUCLIDEAN, probHUX: Double = 0.25, recombination: Double = 0.35, prob0to1: Double = 0.05): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{populationSize:} número de individuos que contiene la población.
+    \item \textit{maxEvaluations:} número máximo de evaluaciones a realizar por el algoritmo.
+    \item \textit{algorithm:} cadena de texto indicando la versión del algoritmo a ejecutar. Las distintas versiones están explicadas en la sección \ref{sec:alg_eus}.
+    \item \textit{distance:} indica el tipo de distancia a usar. Es un valor del enumerado \textit{Distances} implementado en el paquete \textit{util} de esta biblioteca.
+    \item \textit{probHUX:} probabilidad de cambiar un gen de cero a uno, utilizado en el proceso de cruce.
+    \item \textit{recombination:} umbral de recombinación, usado en el proceso de reinicialización.
+    \item \textit{prob0to1:} probabilidad de cambiar un gen de cero a uno, utilizado en el proceso de reinicialización.
+\end{itemize}
+
+\subsection{Clase InstanceHardnessThreshold} \label{subsec:impl_instancehardnessthreshold}
+
+Este algoritmo no se ha implementado siguiendo fielmente las indicaciones del \textit{paper} original sino que se ha implementado la versión propuesta en la biblioteca \textit{imbalanced-learn}. El pseudocódigo implementado es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1] \label{pseudocode:bc}
+\Function {InstanceHardnessThreshold}{conjunto de datos D, N}
+\State particionamiento = aplicar \textit{k-fold} y crear las \textit{N} particiones
+\State probabilidades = $\{0.0, ..., 0.0\}$ // size(probabilidades) == size(D)
+\For{conjunto de train y test $\in$ particionamiento}
+\State c4.5 = entrenar un árbol de decisión C4.5 con el conjunto de \textit{train}
+\State \parbox[t]{305pt}{prob = probabilidad de cada instancia de \textit{test} de pertenecer a la clase de dicha instancia\strut}
+\State guardar en probabilidades la probabilidad de cada instancia
+\EndFor
+\State indiceFinal = $\{\}$
+\For{c$_i$ $\in$ clasesDisponible}
+\If{c$_i$ != claseMinoritaria}
+\State nSamples = numero de instancias de la clase c$_i$
+\State targetIndex = indice de las instancias que tienen la clase c$_i$
+\State \parbox[t]{280pt}{targetProbs = probabilidades de las instancias seleccionadas por targetIndex\strut}
+\algstore{break}
+\end{algorithmic}
+\end{codigo}
+	
+\begin{codigo}
+\begin{algorithmic}[1]
+\algrestore{break}
+
+\State n = número de instancias que tienen la clase c$_i$
+\State percentil = (1.0 - (nSamples / n)) * 100.0
+\State corte = (targetProbs.length - 1) * (percentil / 100.0)
+\State \parbox[t]{280pt}{umbral = ordenar targetProbs y coger el elemento en la posición corte\strut}
+\State \parbox[t]{280pt}{indexTargetClass = instancias que tienen la clase c$_i$ cuya probabilidad de pertenecer c$_i$ supera el umbral\strut}
+\Else
+\State indexTargetClass = indice de las clases minoritarias
+\EndIf
+\State \parbox[t]{280pt}{indiceFinal = indiceFinal $\cup$ instancias seleccionadas por indexTargetClass\strut}
+\EndFor
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+La idea detrás de esta implementación es calcular la probabilidad de cada instancia de pertenecer a cada clase y quedarnos con aquellos elementos cuya probabilidad supera un umbral. Dicho umbral viene calculado por el percentil calculado sobre las instancias objetivo. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, nFolds: Int = 5): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{nFolds:} número de \textit{folds} a crear al aplicar \textit{cross-validation}.
+\end{itemize}
+
+\subsection{Clase IterativeInstanceAdjustmentImbalancedDomains} \label{subsec:impl_iterativeinstanceadjustmentimbalanceddomains}
+
+Este algoritmo se ha implementado como indica el \textit{paper} original. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, iterations: Int = 100, strategy: Int = 1, randomChoice: Boolean = true): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{iterations:} número máximo de iteraciones a realizar por el algoritmo.
+    \item \textit{strategy:} indica que estrategia a segur en el proceso de mutación del algoritmo \textit{Differential Evolution}.
+    \item \textit{randomChoice:} indica si se selecciona un nuevo individuo de forma aleatoria o no en la ejecución del algoritmo.
+\end{itemize}
+
+
+\subsection{Clase NearMiss} \label{subsec:impl_nearmiss}
+
+Este algoritmo se ha implementado como indica el \textit{paper} original. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, distance: Distances.Distance = Distances.EUCLIDEAN, version: Int = 1, nNeighbours: Int = 3, ratio: Double = 1.0): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{distance:} indica el tipo de distancia a usar. Es un valor del enumerado \textit{Distances} implementado en el paquete \textit{util} de esta biblioteca.
+    \item \textit{version:} indica que versión del algoritmo ejecutar. Las distintas versiones las podemos ver en la sección \ref{sec:alg_nm}.
+    \item \textit{nNeighbours:} numero de vecinos de la clase mayoritaria a coger por cada instancia minoritaria. Solo se usa si la versión usada es la \textit{3}.
+    \item \textit{ratio:} ratio indicando el número de instancias mayoritarias a coger. Se cogerán $\left | numero\ instancias\ minoritarias \right | \ *\ ratio$.
+\end{itemize}
+
+\subsection{Clase NeighbourhoodCleaningRule} \label{subsec:impl_neighbourhoodcleaningrule}
+
+Este algoritmo se ha implementado como indica el \textit{paper} original. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, distance: Distances.Distance = Distances.EUCLIDEAN, k: Int = 3, threshold: Double = 0.5): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{distance:} indica el tipo de distancia a usar. Es un valor del enumerado \textit{Distances} implementado en el paquete \textit{util} de esta biblioteca.
+    \item \textit{k:} número de vecinos a usar al aplicar la regla \textit{k-NN}.
+    \item \textit{thresold:} una clase será reducida si el número de instancias asociadas a dicha clase es mayor que $\left | numero\ instancias\ minoritarias \right | \ *\ thresold$.
+\end{itemize}
+
+\subsection{Clase OneSideSelection} \label{subsec:impl_onesideselection}
+
+Este algoritmo se ha implementado como indica el \textit{paper} original. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, distance: Distances.Distance = Distances.EUCLIDEAN): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{distance:} indica el tipo de distancia a usar. Es un valor del enumerado \textit{Distances} implementado en el paquete \textit{util} de esta biblioteca.
+\end{itemize}
+
+\subsection{Clase RandomUndersampling} \label{subsec:impl_randomundersampling}
+
+Este algoritmo se ha implementado de forma intuitiva, ya que es el más sencillo de toda la biblioteca y no sigue ningún \textit{paper}. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, ratio: Double = 1.0, replacement: Boolean = false): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{ratio:} ratio indicando el número de instancias mayoritarias a coger. Se cogerán $\left | numero\ instancias\ minoritarias \right | \ *\ ratio$.
+    \item \textit{replacement:} indica si aplicar reemplazo o no a la hora de seleccionar los elementos mayoritarios. Si se aplica, una instancia puede ser seleccionada múltiples veces.
+\end{itemize}
+
+\subsection{Clase TomekLink} \label{subsec:impl_tomeklink}
+
+Este algoritmo se ha implementado como indica el \textit{paper} original. Se ha añadido un argumento extra que permite decidir que instancias eliminar una vez se han creado los \textit{tomek links}. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, distance: Distances.Distance = Distances.EUCLIDEAN, ratio: String = "not minority"): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{distance:} indica el tipo de distancia a usar. Es un valor del enumerado \textit{Distances} implementado en el paquete \textit{util} de esta biblioteca.
+    \item \textit{ratio:} indica que instancias se deben borrar de los \textit{tomek links}. Si su valor es \textit{all}, se borrarán todas las instancias; si su valor es \textit{minority}, se borrarán solo las instancias de la clase minoritaria y si su valor es \textit{not minority}, se borrarán las instancias de las clases que no sean la minoritaria.
+\end{itemize}
+
+\subsection{Clase UndersamplingBasedClustering} \label{subsec:impl_undersamplingbasedclustering}
+
+Este algoritmo se ha implementado como indica el \textit{paper} original. La cabecera que ejecuta este algoritmo es la siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+sample(file: Option[String] = None, method: String = "random", m: Double = 1.0, k: Int = 3, numClusters: Int = 50, restarts: Int = 1, minDispersion: Double = 0.0001, maxIterations: Int = 200): Data
+\end{lstlisting}
+
+Los argumentos son:
+
+\begin{itemize}
+    \item \textit{file:} si está definido, se guardará un fichero de \textit{log} —usando la clase \textit{Logger}— en el fichero indicado por el valor de dicho parámetro.
+    \item \textit{method:} indica que método a ejecutar a la hora de seleccionar las instancias mayoritarias. Los posibles valores son \textit{random}, \textit{NearMiss1}, \textit{NearMiss2}, \textit{NearMiss3}, \textit{MostDistant} y \textit{MostFar}. El significado de cada uno de ellos está explicado en la sección \ref {sec:alg_nm}.
+    \item \textit{m:} ratio usado en el cálculo de $SSize_{MA}^{i}$ explicado en la equación \label{eq:sbc}.
+    \item \textit{k:} número de vecinos a usar al aplicar la regla \textit{k-NN}.
+    \item \textit{numClusters:} número de \textit{clústeres} a crear.
+    \item \textit{restarts:} número de veces a aplicar el algoritmo de clustering —el algoritmo se queda el mejor resultado de todas las ejecuciones—.
+    \item \textit{minDispersion:} si la dispersión tras una iteración del algoritmo \textit{kMeans} es menor que este valor, se detiene la ejecución.
+    \item \textit{maxIterations:} número máximo de iteraciones permitidas para el algoritmo \textit{kMeans}.
+\end{itemize}
+
+\section{Funciones de entrada y salida.} \label{sec:entrada_salida}
+
+Esta biblioteca tiene una clase destinada a la lectura de datos y otra a la escritura de datos, facilitando así la ejecución de los algoritmos y el guardado del resultado de los mismos. Estás clases son \textit{Reader} y \textit{Writer}, implementadas dentro del paquete \textit{io}. La clase \textit{Reader} lee los datos de un fichero de datos y crear un objeto de tipo \textit{Data} listo para ser pasado directamente a un algoritmo. Una vez se ha aplicado el algoritmo, se puede pasar el objeto \textit{Data} a la clase \textit{Writer} para escribirlo en un fichero de salida.
+
+\section{Manual de usuario.} \label{sec:manual}
+
+En esta sección vamos a comentar los pasos que tendría que hacer un usuario para hacer uso de esta biblioteca. Lo primero que debe hacer el usuario es leer un conjunto de datos para poder ser usado. Supongamos que tiene un conjunto de datos en formato \textit{ARFF} y otro en formato \textit{csv} \cite{csv}. Para leer dichos conjuntos debemos hacer lo siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+import undersampling.io.Reader
+
+val reader = new Reader
+
+val csvData: Data = reader.readDelimitedText(file = pathToFile)
+val arffData: Data = reader.readArff(file = pathToFile)
+\end{lstlisting}
+
+Una vez tenemos los conjuntos de datos, solo debemos decidir que algoritmo queremos aplicar y llamar a su método \textit{sample}. Veamos como aplicar, por ejemplo, el algoritmo \textit{NCL} \cite{ncl} —para todos los algoritmos el proceso es el mismo—. Lo vamos sobre ambos conjuntos de datos, aunque el proceso es el mismo. Supongamos que queremos crear un fichero de \textit{log} para obtener la información de ejecución del algoritmo y que queremos que este fichero de \textit{log} se llame \textit{milogX}, donde \textit{X} es el formato del fichero de datos de entrada:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+import undersampling.core.NeighbourhoodCleaningRule
+
+val nclCSV = new NeighbourhoodCleaningRule(csvData, seed = 0L)
+val resultCSV: Data = nclCSV.sample(file = Option("milogCSV.log"))
+
+val nclARFF = new NeighbourhoodCleaningRule(arffData, seed = 0L)
+val resultARFF: Data = nclCSV.sample(file = Option("milogARFF.log"))
+\end{lstlisting}
+
+En este ejemplo hemos usado los valores por defecto de todos los parámetros del algoritmo para facilitar el uso del mismo, pero en la página de la documentación —\href{https://nestorrv.github.io}{https://nestorrv.github.io}— podemos ver que argumentos espera cada algoritmo así como una descripción de que es cada uno de ellos. \\
+
+Finalmente, podemos volcar el resultado del algoritmo a un fichero de datos llamado \textit{resultX.X}, donde \textit{X} es el formato del fichero de datos de entrada. Para ello, solo debemos ejecutar:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+import undersampling.io.Writer
+
+val writer: Writer = new Writer
+
+writer.writeDelimitedText(file = "salidaCSV.csv", data = resultCSV)
+writer.writeArff(file = "salidaARFF.arff", data = resultARFF)
+\end{lstlisting}
+
+Con estos sencillos pasos tenemos un conjunto de datos reducido por el algoritmo \textit{NCL} almacenado en un fichero de datos con el mismo formato que el conjunto de datos original y un fichero de \textit{log} donde ver información sobre como ha ido el proceso.

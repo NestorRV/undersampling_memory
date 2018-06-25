@@ -1,0 +1,13 @@
+\chapter{Conclusiones y trabajos futuros.} \label{ch:conclusion}
+
+En este proyecto se ha implementado una biblioteca con quince algoritmos de \textit{undersampling}. En el momento de publicación del mismo no existe ninguna biblioteca con tantos algoritmos de \textit{undersampling} y mucho menos en un lenguaje tan novedoso y a la orden del día como puede ser \textit{Scala}. \\
+
+En cuanto a nivel técnico, hemos visto la importancia de aplicar técnicas de \textit{undersampling} antes de entrenar un clasificador por dos razones; primero, reducimos el número de elementos, lo cual nos permite realizar el proceso de entrenamiento más rápido y, segundo, en la mayoría de los casos obtendremos un resultado mejor —o similar— al resultado que hubiésemos obtenido con el conjunto de datos original.
+
+\section{Trabajos futuros.} \label{sec:trabajos_futuros.}
+
+Como trabajo futuro se podrían seguir implementando más algoritmos de \textit{undersampling} para hacer la biblioteca más completa aún. \\
+
+Otra mejora posible sería rehacer los algoritmos para optimizarlos con el conocimiento adquirido a lo largo de estos meses de aprendizaje en \textit{Scala}, creando así versiones más eficientes y competitivas. \\
+
+Finalmente, dado que entramos en una era de cantidades masivas de datos, se podrían adaptar los algoritmos para hacer un mayor uso del paralelismo, aunque la mayoría de algoritmos —no todos porque no todos pueden serlo— son paralelos. También se podría hacer uso de \textit{Spark} \cite{spark} \cite{sparkweb}, un \textit{framework} que permite introducir paralelismo en distintos lenguajes, entre ellos \textit{Scala}. También se podría hacer uso de frameworks que permitan hacer ejecuciones en la \textit{GPU}, reduciendo así el tiempo de ejecución.

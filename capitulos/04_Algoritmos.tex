@@ -1,0 +1,483 @@
+\chapter{Algoritmos seleccionados.} \label{ch:algoritmos}
+
+En este proyecto se han implementado los siguientes 15 algoritmos: 
+
+\begin{itemize}
+	\item \textbf{Balance Cascade}, al cual nos referiremos como \textit{BC}.
+	\item \textbf{Class Purity Maximization algorithm}, al cual nos referiremos como \textit{CPM}.
+	\item \textbf{ClusterOSS}, al cual nos referiremos como \textit{ClusterOSS}.
+	\item \textbf{Condensed Nearest Neighbor decision rule}, al cual nos referiremos como \textit{CNN}.
+	\item \textbf{Easy Ensemble}, al cual nos referiremos como \textit{EE}.
+	\item \textbf{Edited Nearest Neighbour rule}, al cual nos referiremos como \textit{ENN}.
+	\item \textbf{Evolutionary Undersampling}, al cual nos referiremos como \textit{EUS}.
+	\item \textbf{Instance Hardness Threshold}, al cual nos referiremos como \textit{IHTS}.
+	\item \textbf{Iterative Instance Adjustment for Imbalanced Domains}, al cual nos referiremos como \textit{IPADE-ID}.
+	\item \textbf{NearMiss}, al cual nos referiremos como \textit{NM}.
+	\item \textbf{Neighbourhood Cleaning Rule}, al cual nos referiremos como \textit{NCL}.
+	\item \textbf{One-Side Selection}, al cual nos referiremos como \textit{OSS}.
+	\item \textbf{Random Undersampling}, al cual nos referiremos como \textit{RU}.
+	\item \textbf{Tomek Link}, al cual nos referiremos como \textit{TL}.
+	\item \textbf{Undersampling Based on Clustering}, al cual nos referiremos como \textit{SCB}.
+\end{itemize}
+
+En este capítulo vamos a ver el pseudocódigo de cada uno de ellos y explicar un poco su funcionamiento e idea principal.
+
+\section{Balance Cascade.} \label{sec:alg_bc}
+El artículo original donde se ha publicado este algoritmo es \textit{``Exploratory Undersampling for Class-Imbalance Learning} escrito por \textit{Xu-Ying Liu, Jianxin Wu y Zhi-Hua Zhou''} \cite{bc-ee}. El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {BalanceCascade}{Conjunto de instancias minoritaria P, conjuntos de instancias mayoritarias N con $\left | P \right | < \left | N \right |$, numero de subconjuntos T a crear de N, número de iteraciones de AdaBoost $s_i$}
+\State \parbox[t]{305pt}{$i \leftarrow 0, f \leftarrow \sqrt[T-1]{\frac{\left | P \right |}{\left | N \right |}}$, f es el ratio de falsos positivos que H$_i$ debe alcanzar\strut}
+\While{i != T}
+\State i $\leftarrow$ i + 1
+\State Coger de forma aleatoria un subconjunto N$_i$ con $\left | P \right | < \left | N_i \right |$
+\State \parbox[t]{305pt}{Aprender H$_i$ con P, N$_i$ donde H$_i$ es un clasificador AdaBoost con s$_i$ clasificadores debiles h$_{i, j}$ y correspondientes pesos $\alpha_{i, j}$. El umbral es $\theta_i$. $H_i = sgn(\sum_{j=1}^{s_i} \alpha_{i, j} h_{i, j}(x) - \theta_i)$\strut}
+\State Ajustar $\theta_i$ para que el ratio de falsos positivos de H$_i$ sea f.
+\State \parbox[t]{305pt}{Quitar de N todos los ejemplos que son clasificados correctamente por H$_i$\strut}
+\EndWhile
+\State \Return Un conjunto: $H(x) = sgn(\sum_{i=1}^{T} \sum_{j=1}^{s_i} \alpha_{i, j} h_{i, j}(x) - \sum_{i=1}^{T} \theta_i)$
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+La idea de este algoritmo es realizar distintas particiones del conjunto de datos inicial y aprender un clasificador para cada uno de ellos y luego combinar las mejores instancias de cada subconjunto para formar el conjunto final de datos.
+
+\section{Class Purity Maximization algorithm.} \label{sec:alg_cpm}
+El artículo original donde se ha publicado este algoritmo es \textit{``An Unsupervised Learning Approach to Resolving the Data Imbalanced Issue in Supervised Learning Problems in Functional Genomics} escrito por \textit{Kihoon Yoon y Stephen Kwek''} \cite{cpm}. El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {ClassPurityMaximization}{}
+\State \parbox[t]{305pt}{Seleccionar como centros una instancia de la clase minoritaria y otra de la clase mayoritaria\strut}
+\algstore{break}
+\end{algorithmic}
+\end{codigo}
+	
+\begin{codigo}
+\begin{algorithmic}[1]
+\algrestore{break}
+\State \parbox[t]{305pt}{Repartir el resto de instancias en cada uno de los \textit{clúster} generados en el paso dos según su cercanía a cada uno de los centros. Se debe garantizar que uno de los dos \textit{clúster} tiene un mayor valor de pureza\strut}
+\State \parbox[t]{305pt}{Repetir el proceso recursivamente —en cada uno de los \textit{clúster} generados en el paso anterior— hasta que no se pueda generar una partición en la cual uno de los \textit{subclúster} tenga mayor pureza que su \textit{clúster} padre\strut}
+\State \parbox[t]{305pt}{\Return Añadimos todas las instancias minoritarias a cada \textit{clúster} no puro\strut}
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+La idea de este algoritmo es ir partiendo el conjunto de datos en \textit{clústeres} e ir realizando el particionamiento mientras obtengamos un conjunto más puro —mejor— que el anterior.
+
+\section{ClusterOSS.} \label{sec:alg_clusteross}
+El artículo original donde se ha publicado este algoritmo es \textit{``ClusterOSS: a new undersampling method for imbalanced learning.''} escrito por \textit{Victor H Barella, Eduardo P Costa y André C. P. L. F. Carvalho} \cite{clusteross}. El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {ClusterOSS}{Conjunto de datos D}
+\State \parbox[t]{305pt}{Train = $\left \{ \right \}$ Test = $\left \{ \right \}$\strut}
+\State \parbox[t]{305pt}{InstanciasMayoritatias = cogerInstanciasMayoritarias(D)\strut}
+\State \parbox[t]{305pt}{C = AlgClustering(InstanciasMayoritarias)\strut}
+\For{$cluster\ C_i \in C$}
+\State x = InstanciaMasCercanaAlCentro(C$_i$)
+\State Train = Train $\cup$ $\left \{ x \right \}$
+\State Test = Test $\cup\ (C_i\left \{ x \right \})$
+\EndFor
+\State Resultado = KNN(Train, Test)
+\State MalClasificados = ObtenerMalClasificados(Resultado)
+\State NuevoD = Train $\cup$ MalClasificados
+\State TLinks = TomekLinks(NuevoD)
+\For{z $\in$ NuevoD}
+\If{z $\in$ TLinks}
+\State NuevoD = NuevoD - $\left \{ z \right \}$
+\EndIf
+\EndFor
+\State \Return NuevoD
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+\textit{AlgClustering} es una función que aplica un algoritmo de \textit{clustering}. En este proyecto se ha usado \textit{kMeans} \cite{kmeans}. \\ 
+
+La idea de este algoritmo es construir varios \textit{clústeres} para quedarnos con los elementos más representativos del conjunto de datos original. Una vez tenemos los elementos más representativos, aplicamos un algoritmo \textit{Tomek Link} —el cual podemos ver en la sección \ref{sec:alg_tl}— para limpiar elementos ruidosos.
+
+\section{Condensed Nearest Neighbor decision rule.} \label{sec:alg_cnn}
+El artículo original donde se ha publicado este algoritmo es \textit{``The Condensed Nearest Neighbor Rule''} escrito por \textit{P. Hart} \cite{cnn}. El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {CNN}{}
+\State El primer ejemplo se coloca en \textit{STORE}
+\State \parbox[t]{305pt}{El segundo ejemplo se clasifica usando la regla NN usando como conjunto de datos el contenido de \textit{STORE}. Si se clasifica correctamente, dicho ejemplo se mete en \textit{GRABBAG}, en caso contrario se pone en \textit{STORE}\strut}
+\State \parbox[t]{305pt}{De forma iterativa, se repite el proceso del paso 2 para cada ejemplo restante\strut} 
+\State \parbox[t]{305pt}{Tras una primera pasada por los datos, se procede a iterar sobre \textit{GRABBAG} hasta terminar, lo cual puede suceder por:\strut} 
+\begin{itemize}
+	\item \parbox[t]{305pt}{Todos los elementos de \textit{GRABBAG} se han transferido a \textit{STORE}. En este caso, el conjunto obtenido es igual que el original\strut}
+	\item \parbox[t]{305pt}{Se ha realizado una pasada entera sobre \textit{GRABBAG} y ningún elemento ha sido transferido a \textit{STORE}\strut}
+\end{itemize}
+\State \Return El contenido de \textit{STORE} es el resultado final
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+La idea de este algoritmo es bien sencilla. Busca eliminar puntos innecesarios. Un punto se considera innecesario si con el conjunto de puntos que llevamos guardados hasta el momento somos capaces de predecir correctamente su clase. Si esto es así, no nos interesa ese punto y lo descartamos.
+
+\section{Easy Ensemble.} \label{sec:alg_ee}
+El artículo original donde se ha publicado este algoritmo es \textit{``Exploratory Undersampling for Class-Imbalance Learning''} escrito por \textit{Xu-Ying Liu, Jianxin Wu y Zhi-Hua Zhou} \cite{bc-ee}. El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {EasyEnsemble}{Conjunto de instancias minoritaria P, conjuntos de instancias mayoritarias N con $\left | P \right | < \left | N \right |$, numero de subconjuntos T a crear de N, número de iteraciones de AdaBoost $s_i$}
+\State $i \leftarrow 0$
+\While{i != T}
+\State i $\leftarrow$ i + 1
+\State Coger de forma aleatoria un subconjunto N$_i$ con $\left | P \right | < \left | N_i \right |$
+\State \parbox[t]{305pt}{Aprender H$_i$ con P, N$_i$ donde H$_i$ es un clasificador AdaBoost con s$_i$ clasificadores debiles h$_{i, j}$ y correspondientes pesos $\alpha_{i, j}$. El umbral es $\theta_i$. $H_i = sgn(\sum_{j=1}^{s_i} \alpha_{i, j} h_{i, j}(x) - \theta_i)$\strut}
+\EndWhile
+\State \Return Un conjunto: $H(x) = sgn(\sum_{i=1}^{T} \sum_{j=1}^{s_i} \alpha_{i, j} h_{i, j}(x) - \sum_{i=1}^{T} \theta_i)$
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+Este algoritmo sigue la misma idea que \textit{BC} \ref{sec:alg_bc}. Busca realizar distintas particiones del conjunto de datos inicial y aprender un clasificador para cada uno de ellos y luego combinar las mejores instancias de cada subconjunto para formar el conjunto final de datos.
+
+\section{Edited Nearest Neighbour rule.} \label{sec:alg_enn}
+El artículo original donde se ha publicado este algoritmo es \textit{``Asymptotic Properties of Nearest Neighbor Rules Using Edited Data''} escrito por \textit{Dennis L. Wilson} \cite{enn}. El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {ENN}{Conjunto de datos D}
+\State S = D
+\For{x$_i \in$ S}
+\State \parbox[t]{305pt}{Descartamos x$_i$ de S si no se clasifica correctamente usando la relga NN usando como conjunto de datos D - $\left \{ x_i \right \}$\strut}
+\EndFor
+\State \Return S
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+La idea de este algoritmo es bastante similar a la de \textit{CNN} \ref{sec:alg_cnn}, va eliminando puntos del conjunto de datos si se consideran redundantes, es decir, podemos predecir su clase usando todos los puntos del conjunto original quitando el que estamos tratando.
+
+\section{Evolutionary Undersampling.} \label{sec:alg_eus}
+El artículo original donde se ha publicado este algoritmo es \textit{``Evolutionary Under-Sampling for Classification with Imbalanced Data Sets: Proposals y Taxonomy''} escrito por \textit{Salvador Garcia y Francisco Herrera} \cite{eus}. El pseudocódigo de este algoritmo es el pseudocódigo de cualquier algoritmo evolutivo, el cuál es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {EUS}{Conjunto de datos D}
+\State Generar población aleatoria inicial
+\While{numeroEvaluaciones $<$ evaluacionesMaximas}
+\State \parbox[t]{305pt}{Generamos los nuevos descendientes a partir de la población actual\strut}
+\State \parbox[t]{305pt}{Evaluamos los nuevos descendientes\strut}
+\State \parbox[t]{305pt}{Ordenamos la población actual y la nueva población\strut}
+\State \parbox[t]{305pt}{Mezclamos las dos poblaciones quedándonos con los N mejores individuos, donde N es el tamaño original de la población.\strut}
+\EndWhile
+\State \Return El mejor individuo de la población
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+Dado que es un algoritmos evolutivo, podemos describir las características principales del mismo:
+
+\begin{itemize}
+	\item \textit{Representación del individuo}: cada individuo es un vector de tamaño $\left | conjunto\_original \right |$ formado por unos y/o ceros. Cada individuo representa un subconjunto de elementos del conjunto original. Si en la posición \textit{i} del vector hay un uno, la instancia \textit{i} está incluida en dicho subconjunto.
+	\item \textit{Población inicial:} población aleatoria formada por el número de individuos indicado por el usuario.
+	\item \textit{Función de evaluación:} este algoritmo admite distintas funciones de evaluación según la versión deseada a ejecutar.
+	\begin{itemize}
+		\item Para la versión \textit{EBUSGSGM} se usa
+		\begin{equation}
+			g - abs(1 - (nPositives / nNegatives)) * 20
+		\end{equation}
+		 donde \textit{g} es la media geométrica —la cual podemos ver explicada con detalle en la subsección \ref{subsec:gm}—, \textit{nPositives} es el número de instancias positivas en el subconjunto seleccionado y \textit{nNegatives} es el número de instancias negativas en el subconjunto seleccionado.
+		\item Para la versión \textit{EBUSMSGM} se usa
+		\begin{equation}
+			g - abs(1 - (nPositivesTotal / nNegatives)) * 20
+		\end{equation}
+		donde \textit{g} es la media geométrica, \textit{nPositivesTotal} es el número de instancias positivas en el conjunto original y \textit{nNegatives} es el número de instancias negativas en el subconjunto seleccionado.
+		\item Para la versión \textit{EUSCMGSGM} se usa la media geométrica.
+		\item Para la versión \textit{EUSCMMSGM} se usa la media geométrica.
+		\item Para la versión \textit{EBUSGSAUC} se usa
+		\begin{equation}
+			auc - abs(1 - (nPositives / nNegatives)) * 0.2	
+		\end{equation} 
+		donde \textit{auc} es el área bajo la curva \textit{ROC} —la cual podemos ver explicada con detalle en la subsección \ref{subsec:auc}—, \textit{nPositives} es el número de instancias positivas en el subconjunto seleccionado y \textit{nNegatives} es el número de instancias negativas en el subconjunto seleccionado.
+		\item Para la versión \textit{EBUSMSAUC} se usa
+		\begin{equation}
+			auc - abs(1 - (nPositivesTotal / nNegatives)) * 0.2
+		\end{equation}
+		donde \textit{auc} es el área bajo la curva \textit{ROC} \textit{nPositivesTotal} es el número de instancias positivas en el conjunto original y \textit{nNegatives} es el número de instancias negativas en el subconjunto seleccionado.
+		\item Para la versión \textit{EUSCMGSAUC} se usa el área bajo la curva \textit{ROC}.
+		\item Para la versión \textit{EUSCMMSAUC} se usa el área bajo la curva \textit{ROC}.
+	\end{itemize}
+	\item \textit{Criterio de parada:} el algoritmo acepta un parámetro mediante el cual el usuario puede indicar el número de evaluaciones límite que puede hacer el algoritmo.
+	\item \textit{Operador de cruce:} se ha usado el operador de cruce \textit{HUX}. Este operador genera dos nuevo descendientes intercambiando los genes —un gen es un elemento del vector que representa al individuo— de sus dos ancestros. El intercambio se produce si la distancia \textit{Hamming} —el número de genes distintos entre los dos ancestros— es mayor que un umbral indicado por el usuario.
+\end{itemize}
+
+Las versiones cuyo nombre contiene \textit{GS} indican que se aplica \textit{Global Selection}, es decir, se pueden descartar instancias de la clase minoritaria. Las versiones cuyo nombre contiene \textit{MS} indican que se aplica \textit{Majority Selection}, es decir, sólo se pueden descartar instancias de la clase mayoritaria. \\
+
+Las versiones cuyo nombre contiene \textit{GM} indican que se usa la media geométrica como componente principal de la función de evaluación. Las versiones cuyo nombre contiene \textit{AUC} indican que se usa el área bajo la curva \textit{ROC} como componente principal de la función de evaluación. \\
+
+Las versiones cuyo nombre contiene \textit{EBUS} —que significa \textit{Evolutionary Balancing Under-Sampling}— priorizan obtener un conjunto de datos equilibrado. Las versiones cuyo nombre contiene \textit{EUSCM} —que significa \textit{Evolutionary Under-Sampling guided by Classification Measures}— priorizan obtener un conjunto de datos con buenos resultados a la hora de realizar clasificación, dejando en un segundo plano el objetivo de buscar un conjunto de datos equilibrado.
+
+\section{Instance Hardness Threshold.} \label{sec:alg_ihts}
+El artículo original donde se ha publicado este algoritmo es \textit{``An Empirical Study of Instance Hardness''} escrito por \textit{Michael R. Smith, Tony Martinez y Christophe Giraud-Carrier} \cite{ihts}. El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {IHTS}{Conjunto de datos D}
+\State \parbox[t]{305pt}{Calcular $k-Disagreeing Neighbors\ - \ kDN$\strut}
+\State \parbox[t]{305pt}{Calcular $Disjunct Size\ - \ DS$\strut}
+\State \parbox[t]{305pt}{Calcular $Disjunct Class Percentage\ - \ DCP$\strut}
+\State \parbox[t]{305pt}{Calcular $Class Likelihood\ - \ Cl$\strut}
+\State \parbox[t]{305pt}{Calcular $Class Likelihood Difference\ - \ CLD$\strut}
+\State \parbox[t]{305pt}{Calcular $Minority Value\ - \ MV$\strut}
+\State \parbox[t]{305pt}{Calcular $Class Balance\ - \ CB$\strut}
+\State \parbox[t]{305pt}{La dureza de una instancia se calcula como $0.5569 * DN - 0.1984 * DCP - 0.124 * CL + 0.0752 * CB - 0.072 * CLD + 0.0365 * DS + 0.0339 * MV + 0.9088$\strut}
+\State \parbox[t]{305pt}{Clasificar las instancias según su dureza: alta si $(CLD(x,t(x)) < 0\ y\ ((DS(x) == 0\ y\ DCP(x) < 0.5)\ o\ DN(x) > 0.8))$, baja si $((DS(x) == 0\ y\ DCP(x) < 1)\ o\ DN(x) > 0.2)$ o ninguna en otro caso.\strut}
+\State \parbox[t]{305pt}{Las instancias con una dureza alta se consideran que están mal clasificadas o son ruidosas y, por lo tanto, son eliminadas del conjunto de datos.\strut}
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+kDN se puede calcular de la siguiente forma: 
+
+\begin{equation}
+	kDN(x) = \frac{\left \{ y:y \in kNN(x) \wedge t(y) \neq t(x) \right \}}{k}
+\end{equation}
+
+donde \textit{kNN(x)} es el conjunto de los \textit{k} vecinos más cercanos de \textit{x} y \textit{t(x)} es la clase asociada a \textit{x}. \\
+
+DS se puede calcular de la siguiente forma: 
+
+\begin{equation}
+	DS(x) = \frac{\left | disjunct(x) - 1 \right |}{max_{y\in D}\left | disjunct(y) - 1 \right |}
+\end{equation}
+
+donde \textit{disjunct(x)} es una función que devuelve el subconjunto de un árbol de decisión \textit{C4.5} que cubre a \textit{x}. \\
+
+DCP se puede calcular de la siguiente forma:
+
+\begin{equation}
+	DCP(x) = \frac{\left | \left \{ z:z \in disjunct(x) \wedge t(z) = t(x) \right \} \right |}{\left | disjunct(x) \right |}
+\end{equation}
+
+donde \textit{disjunct(x)} es una función que devuelve el subconjunto de un árbol de decisión \textit{C4.5} que cubre a \textit{x} y \textit{t(x)} es la clase asociada a \textit{x}. \\
+
+CL se puede calcular de la siguiente forma:
+
+\begin{equation}
+	CL(x, t(x)) = \prod_{i}^{\left | x \right |} P(x_i | t(x))
+\end{equation}
+
+donde \textit{x$_i$} es el valor de la instancia \textit{x} en su atributo \textit{i-ésimo}. \\
+
+CLD es la diferencia entre CL y la máxima probabilidad para todas las otras clases. Se puede calcular de la siguiente forma:
+
+\begin{equation}
+	CLD(x, t(x)) = CL(x, t(x)) - \underset{y \in Y - t(x)}{argmax} \ CL(x, y)
+\end{equation}
+
+MV se puede calcular de la siguiente forma:
+
+\begin{equation}
+	MV(x) = \frac{\left | \left \{ z : z \in D \wedge t(z) = t(x) \right \} \right |}{max_{y\in Y} \left | \left \{ z : z \in D \wedge t(z) = y \right \} \right |}
+\end{equation}
+
+Finalmente, CB se puede calcular de la siguiente forma:
+
+\begin{equation}
+	MV(x) = \frac{\left | \left \{ z : z \in D \wedge t(z) = t(x) \right \} \right |}{\left | D \right |} - \frac{1}{\left | Y \right |}
+\end{equation}
+
+\section{Iterative Instance Adjustment for Imbalanced Domains.} \label{sec:alg_ipade_id}
+El artículo original donde se ha publicado este algoritmo es \textit{``Addressing imbalanced classification with instance generation techniques: IPADE-ID''} escrito por \textit{Victoria López, Isaac Triguero, Cristóbal J. Carmona, Salvador García y Francisco Herrera} \cite{ipade}. El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {IPADE-ID}{Conjunto de datos D}
+\State \parbox[t]{305pt}{GS = Inicializar la población usando un árbol de decisión C4.5 o kNN\strut}
+\State \parbox[t]{305pt}{Mejorar la población GS aplicando un algoritmo de Evolución Diferencial\strut}
+\State \parbox[t]{305pt}{AUC = evaluar población GS con TR\strut}
+\State \parbox[t]{305pt}{registro de clases$\left [ 0..nClases \right ]$ = optimizable\strut}
+\State \parbox[t]{305pt}{numOptim$\left [ 0..nClases \right ]$ = 0\strut}
+\While{AUC != 1 quedan clases optimizables}
+\State menorPrecision = $\infty$
+\For{i=1 to nClases}
+\If{registro de clases$\left [ i \right ]$ es optimizable}
+\State \parbox[t]{305pt}{precision$\left [ i \right ]$ = Evaluar(GS, ejemplos de TR con clase i)\strut}
+\If{precision$\left [ i \right ]$ $<$ menorPrecision}
+\State menorPrecision = precision$\left [ i \right ]$
+\State claseObj = i
+\EndIf
+\EndIf
+\EndFor
+\If{claseObj = minoritaria y numOptim$\left [ claseObj \right ] >$ 0}
+\State \parbox[t]{295pt}{Mejorar la población GS$_{trial}$ aplicando un algoritmo de Evolución Diferencial\strut}
+\Else
+\State \parbox[t]{295pt}{GS$_{trial}$ = GS $\cup$ $\{$ ejemplos aleatorios cogidos de TR pertenecientes a la clase claseObj $\}$ \strut}
+\State \parbox[t]{295pt}{Mejorar la población GS$_{trial}$ aplicando un algoritmo de Evolución Diferencial\strut}
+\EndIf
+\State \parbox[t]{295pt}{AUC$_{trial}$ = evaluar población GS$_{trial}$ con TR\strut}
+\If{AUC$_{trial}$ $>$ AUC}
+\State \parbox[t]{295pt}{AUC = AUC$_{trial}$\strut}
+\State \parbox[t]{295pt}{GS = GS$_{trial}$\strut}
+\State \parbox[t]{295pt}{numero de optimizaciones$\left [ i \right ]$ = 0\strut}
+\Else
+\If{claseObj = minoritaria y numOptim$\left [ claseObj \right ] <$ T}
+\State \Comment T es el número máximo de optimizaciones
+\State registro de clases$\left [ claseObj \right ]$++
+\Else
+\State registro de clases$\left [ claseObj \right ]$ = no optimizable
+\EndIf
+\EndIf
+\EndWhile
+\State \Return GS
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+Este algoritmo inicia la población con las instancias más relevantes del conjunto de datos original. Para obtener estas instancias seguimos los siguientes pasos:
+
+\begin{itemize}
+	\item Se aprende un árbol de decisión \textit{C4.5} con el conjunto de datos original.
+	\item Se crean tantos \textit{clústeres} como nodos hoja contenga el árbol. Para cada instancia del conjunto de datos, se determina que hoja del árbol es la que clasifica dicha instancia y se añade a su correspondiente \textit{clúster}.
+	\item Se calculan los centroides de cada \textit{clúster}.
+	\item Para cada \textit{clúster} calculamos la instancia más cercana al centroide. El conjunto de instancias inicial es el formado por la unión de estas instancias.
+\end{itemize}
+
+Con este proceso de selección inicial nos garantizamos coger las instancias más representativas de todo el conjunto de datos. Una vez las tenemos, aplicamos de forma iterativa una versión simplificada del algoritmo \textit{Differential Evolution} \cite{differential_evolution} para mejorar el conjunto de datos obtenido en la iteración anterior. Este proceso lo hacemos hasta que no podamos mejorar el valor de la función evaluación. En este caso, la función de evaluación es el área bajo la curva \textit{ROC} —métrica que explicaremos en la subsección \ref{subsec:auc}—.
+
+\section{NearMiss.} \label{sec:alg_nm}
+El artículo original donde se ha publicado este algoritmo es \textit{``kNN Approach to Unbalanced Data Distribution: A Case Study involving Information Extraction''} escrito por \textit{Jianping Zhang y Inderjeet Mani} \cite{nm}. El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {NM}{}
+\If{version = 1}
+\State \parbox[t]{295pt}{Seleccionamos los elementos mayoritarios cuya distancia media a sus tres vecinos de la clase minoritaria más cercanos sea menor\strut}
+\If{version = 2}
+\State \parbox[t]{290pt}{Seleccionamos los elementos mayoritarios cuya distancia media a sus tres vecinos de la clase minoritaria más lejanos sea menor\strut}
+\Else
+\State \parbox[t]{290pt}{Seleccionamos de forma aleatoria una cantidad de elementos mayoritarios para cada elemento minoritario\strut}
+\EndIf
+\EndIf
+\algstore{break}
+\end{algorithmic}
+\end{codigo}
+	
+\begin{codigo}
+\begin{algorithmic}[1]
+\algrestore{break}
+\State \parbox[t]{305pt}{\Return Elementos minoritarios de D $\cup$ Elementos seleccionados en los pasos anteriores del algoritmo\strut}
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+La idea de este algoritmo es eliminar los vecinos mayoritarios que sean redundantes. La definición de redundante varía según la versión del algoritmo a ejecutar.
+
+\section{Neighbourhood Cleaning Rule.} \label{sec:alg_ncl}
+El artículo original donde se ha publicado este algoritmo es \textit{``Improving Identification of Difficult Small Classes by Balancing Class Distribution''} escrito por \textit{J. Laurikkala} \cite{ncl}. El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {NCL}{}
+\State \parbox[t]{305pt}{C = elementos de la clase minoritaria\strut}
+\State \parbox[t]{305pt}{O = elementos de la clase mayoritaria\strut}
+\State \parbox[t]{305pt}{Identificar los elementos ruidosos A$_i$ en O usando ENN\strut}
+\For{Clase C$_i$ en O}
+\State \parbox[t]{295pt}{Calculamos los 3 vecinos más cercanos para cada elemento que tenga por clase a C$_i$ y su etiqueta predicha por dichos vecinos\strut}
+\For{Conjuntos de 3 vecinos v$_i$ y etiqueta predicha}
+\If{Si la etiqueta predicha es incorrecta}
+\State \parbox[t]{270pt}{Calculamos el número de elementos de las clases asociadas a los 3 elementos de v$_i$\strut}
+\State \parbox[t]{270pt}{Añadimos A$_2$ los vecinos cuyo número de elementos de su clase sea mayor que 0.5*número de elementos de la clase minoritaria \strut}
+\EndIf
+\EndFor
+\EndFor
+\State \Return T - (A$_1$ $\cup$ A$_2$)
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+Este algoritmo primero elimina instancias ruidosas aplicando \textit{ENN} \ref{sec:alg_enn}. A continuación, para cada instancia, predecimos su clase con los tres vecinos más cercanos. Si la predicción es incorrecta, eliminamos cada uno de sus vecinos si el número de instancias de la clase asociada a cada uno de ellos es mayor que la mitad del número de instancias de la clase minoritaria. De esta manera, lo que hacemos es eliminar vecinos que clasifican de forma errónea otras instancias.
+
+\section{One-Side Selection.} \label{sec:alg_oss}
+El artículo original donde se ha publicado este algoritmo es \textit{``Addressing the Curse of Imbalanced Training Sets: One-Side Selection''} escrito por \textit{Miroslav Kubat y Stan Matwin} \cite{oss}. El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {OSS}{Conjunto de datos S}
+\State \parbox[t]{305pt}{C = ejemplos positivos de S y un ejemplo negativo escogido aleatoriamente\strut}
+\State \parbox[t]{305pt}{Clasificar S usando la kNN con k = 1 usando los ejemplos de C.\strut}
+\State \parbox[t]{305pt}{Añadir a S todos los ejemplos que han sido mal clasificados\strut}
+\State \parbox[t]{305pt}{Aplicar TomekLink sobre C\strut}
+\State \parbox[t]{305pt}{Eliminar de C todos los elementos negativos que sean parte de un Tomek link\strut}
+\State \Return C
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+La idea de este algoritmo es detectar que ejemplos no se pueden clasificar usando las instancias minoritarias y una mayoritaria al azar. Una vez se han detectado, aplicamos el algoritmo \textit{Tomek Link} —el cual veremos detallado en la sección \ref{sec:alg_tl}— sobre un conjunto de datos formado por las instancias minoritarias y las instancias mal clasificadas para eliminar instancias ruidosas. El resultado proporcionado por \textit{Tomek Link} es el conjunto de datos reducido.
+
+\section{Random Undersampling.} \label{sec:alg_ru}
+
+Este algoritmo es muy simple. Lo único que hacer es eliminar instancias mayoritarias de forma aleatoria hasta que el ratio entre las instancias mayoritarias y las instancias minoritarias sea el especificado en un parámetro, siempre y cuando la distribución de las instancias lo permita.
+
+\section{Tomek Link.} \label{sec:alg_tl}
+El artículo original donde se ha publicado este algoritmo es \textit{``Two Modifications of CNN''} escrito por \textit{Ivan Tomek} \cite{tl}. El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {TomekLinks}{Conjunto de datos D}
+\For{Cada elemento e$_i$ $\in$ D}
+\State TomekLinks = $\left \{ \right\}$
+\State \parbox[t]{305pt}{v$_i$ = vecino más cercano de e$_i$ con clase distinta\strut}
+\State \parbox[t]{305pt}{Calcular la distancia de e$_i$ a todos los elementos de la clase opuesta\strut}
+\algstore{break}
+\end{algorithmic}
+\end{codigo}
+	
+\begin{codigo}
+\begin{algorithmic}[1]
+\algrestore{break}
+\State \parbox[t]{305pt}{Calcular la distancia de v$_i$ a todos los elementos de la clase opuesta\strut}
+\If{El elemento más cercano a e$_i$ es v$_i$}
+\State TomekLinks = TomekLinks $\cup$ $\left \{ e_i, v_i \right\}$
+\EndIf
+\EndFor
+\State \Return D - TomekLinks
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+Este algoritmo busca eliminar instancias ruidosas. Para ello, lo que hace es calcular el vecino más cercano de la clase opuesta para cada instancia y si ambos son el vecino más cercano entre sí, ambos elementos forman un \textit{tomek-link}. Dado que lo estamos aplicando en técnicas de \textit{undersampling}, solo borramos las instancias pertenecientes a la clase mayoritaria en los \textit{tomek-link}.
+
+\section{Undersampling Based on Clustering.} \label{sec:alg_sbc}
+El artículo original donde se ha publicado este algoritmo es \textit{``Under-Sampling Approaches for Improving Prediction of the Minority Class in an Imbalanced Dataset''} escrito por \textit{Show-Jane Yen y Yue-Shi Lee} \cite{sbc}. El funcionamiento principal del algoritmo se basa en la siguiente fórmula:
+
+\begin{equation}
+\label{eq:sbc}
+	SSize_{MA}^{i} = (m \times SizeMI) \times \frac{Size_{MA}^{i} / Size_{MI}^{i}}{\left ( \sum_{i=1}^{K}Size_{MA}^{i} \right ) / Size_{MI}^{i}}
+\end{equation}
+
+Dicha fórmula determina que el número de instancias mayoritarias a seleccionar del \textit{clúster} \textit{i} es SSize$_{MA}^{i}$. \textit{m} es un ratio —que normalmente vale \textit{1}—, \textit{SizeMI} es el número de instancias minoritarias del conjunto de datos, \textit{Size$_{MA}^{i}$} es el número de instancias mayoritarias del \textit{clúster} \textit{i} y \textit{Size$_{MI}^{i}$} es el número de instancias minoritarias del \textit{clúster} \textit{i}. \\
+
+El pseudocódigo del algoritmo es el siguiente:
+
+\begin{codigo}
+\begin{algorithmic}[1]
+\Function {SBC}{Conjunto de datos D}
+\State clusters = kMeans(D)
+\State \parbox[t]{305pt}{Calcular el número de ejemplos mayoritarios en cada \textit{clúster} aplicando la ecuación \ref{eq:sbc} y seleccionar de forma aleatoria los ejemplos mayoritarios de cada \textit{clúster} \strut}
+\State \parbox[t]{305pt}{\Return $\{$ Instancias minoritarias $\}$ $\cup$ $\{$ Instancias mayoritarias seleccionadas en el paso 3.$\}$\strut}
+\EndFunction 
+\end{algorithmic}
+\end{codigo}
+
+La selección de instancias en el paso 3 también se puede hacer aplicando uno de los siguientes criterios:
+
+\begin{itemize}
+	\item \textit{random:} selección puramente aleatoria.
+	\item \textit{NearMiss1}: seleccionamos los elementos mayoritarios cuya distancia media a sus tres vecinos de la clase minoritaria más cercanos sea menor.
+	\item \textit{NearMiss2}: seleccionamos los elementos mayoritarios cuya distancia media a sus tres vecinos de la clase minoritaria más lejanos sea menor.
+	\item \textit{NearMiss3}: seleccionamos de forma aleatoria una cantidad de elementos mayoritarios para cada elemento minoritario.
+	\item \textit{MostDistant}: seleccionamos los ejemplos cuya distancia media a los \textit{N} vecinos del \textit{clúster i} de la clase minoritaria más cercanos sea mayor.
+	\item \textit{MostFar}: seleccionamos los ejemplos cuya distancia media a todos los vecinos de la clase minoritaria sea mayor.
+\end{itemize}
+
+La idea de este algoritmo es crear un conjunto de datos balanceado en cada \textit{clúster} y devolver la unión de todos los subconjuntos balanceados formado en cada \textit{clúster}. Haciendo esto, nos quedamos con los elementos más representativos de ambas clases y en una cantidad similar, garantizando así que obtenemos un conjunto balanceado al final del proceso.

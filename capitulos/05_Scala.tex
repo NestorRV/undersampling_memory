@@ -1,0 +1,89 @@
+\chapter{Introducción a Scala.} \label{ch:scala}
+
+\textit{Scala} \cite{scala} es un lenguaje de programación multi-paradigma. Su nombre viene de la concatenación de dos palabras: \textit{Scalable} y \textit{Language}. Es un lenguaje de programación orientado a objetos —ya que todo valor es un objeto— pero también integra características de los lenguajes funcionales. Su implementación actual corre sobre la máquina virtual de \textit{Java} y, por lo tanto, es totalmente compatible con dicho lenguaje. \\
+
+Junto con \textit{Scala} se ha usado \textit{sbt} \cite{sbt} —acrónimo de \textit{Simple Build Tool}—. Como su nombre indica, es una herramienta que permite compilar y ejecutar proyectos de \textit{Scala} —y de \textit{Java}—. También permite definir un fichero \textit{build.sbt} en el que se pueden incluir dependencias y la metainformación del proyecto —como sucede con otras herramientas de desarrollo, por ejemplo \textit{Maven} \cite{maven} y su fichero \textit{pom.xml}—. El uso de \textit{sbt} facilita las tareas de compilación, gestión de dependencias y ejecución de este proyecto. También se ha usado para generar la documentación de este proyecto, tal y como se explica en la sección \ref{sec:implementacion_algoritmos}.
+
+\section{¿Por qué Scala?} \label{sec:scala}
+
+\subsection{Patrón de diseño mixto.} \label{subsec:patron}
+
+El potencial de\textit{Scala} reside en la combinación de los dos paradigmas de programación, orientado a objetos y el funcional. El paradigma funcional está cogiendo mucha fuerza en los últimos años con el tema del \textit{Big Data}. El \textit{Big Data} requiere de código eficiente y limpio, y esto se puede conseguir con la programación funcional. \textit{Scala} nos permite conseguir nuestro objetivo gracias al uso de valores inmutables, colecciones inmutables, funciones sin efectos colaterales y funciones de primera clase, es decir, las funciones son tratadas como cualquier otra variable.
+
+\subsection{Simplicidad y elegancia.} \label{subsec:simplicidad}
+
+Otro potencial de \textit{Scala} reside en la elegancia y simplicidad para escribir código. Al ser un lenguaje con características funcionales, se pueden hacer muchas operaciones en muy pocas líneas de código. Por ejemplo, crear una matriz de tamaño diez por diez con valores aleatorios entre cero y uno es tan sencillo como:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+val r = new scala.util.Random
+val data = (0 until 10).map(_ => (0 until 10).map(_ => r.nextDouble))
+\end{lstlisting} 
+
+Por ejemplo, definamos una clase \textit{Persona} con la funcionalidad básica para poder almacenar el nombre y el apellido de una persona. El código en \textit{Java} sería el siguiente: 
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+public class Persona {
+    private final String nombre;
+    private final String apellido;
+    public Person(String nombre, String apellido) {
+        this.nombre = nombre;
+        this.apellido = apellido;
+    }
+    public String getNombre() {
+        return nombre;
+    }
+    public String getApellido() {
+        return apellido;
+    }
+}
+\end{lstlisting} 
+
+El equivalente a esta clase en \textit{Scala} es el siguiente:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+class Persona(val nombre: String, val apellido: String)
+\end{lstlisting} 
+
+Como podemos ver, con mucho menos código podemos hacer lo mismo. Además, si hubiésemos definido la clase en \textit{Scala} como:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+case class Persona(val nombre: String, val apellido: String)
+\end{lstlisting} 
+
+tendríamos implementadas las funcionalidades de copia y comparación, tal y como podemos ver en la documentación de las clases \textit{case} \cite{scala-cases}.
+
+\subsection{Escalabilidad.} \label{subsec:escalabilidad}
+
+\textit{Scala} es, tal y como indica su nombre, muy escalable, es simple para escribir pequeños \textit{scripts} personales pero muy potente para escribir grandes proyectos, como puede ser el proyecto explicado en este documento.
+
+\subsection{Modificadores de visibilidad.} \label{subsec:visibilidad}
+
+En \textit{Scala} tenemos un mayor control de la visibilidad que en \textit{Java}. Tenemos los siguientes modificadores:
+
+\begin{itemize}
+	\item \textit{Publico}: Es la visibilidad por defecto en \textit{Scala}. El objeto con dicha visibilidad es accesible desde cualquier otro objeto.
+	\item \textit{Protegido}: Identificado por la palabra reservada \textit{protected}. Visibles por los tipos que lo definen, tipos que heredan y tipos anidados dentro del paquete o subpaquetes donde se define.
+	\item \textit{Privado}: Identificado por la palabra reservada \textit{private}. Visibles por los tipos que lo definen y tipos anidados dentro del paquete donde se define.
+	\item \textit{Protegido$\left [ scope \right ]$}: Identificado por la palabra reservada \textit{protected $\left [ scope \right ]$}. Visibilidad limitada por \textit{scope}, el cual puede ser un paquete, una clase o el propio \textit{this}, es decir, la propia clase donde se define.
+	\item \textit{Privado$\left [ scope \right ]$}: Identificado por la palabra reservada \textit{private $\left [ scope \right ]$}. Visibilidad limitada por \textit{scope}, el cual puede ser un paquete, una clase o el propio \textit{this}, es decir, la propia clase donde se define. Las clases que heredan de esta clase no pueden acceder a dichos objetos.
+\end{itemize}
+
+\subsection{Paralelismo.} \label{subsec:paralelismo}
+
+\textit{Scala} tiene implementadas colecciones paralelas. Estas colecciones permiten ejecutar, de forma transparente para el usuario, código en paralelo sin tener que invertir esfuerzo en programar el paralelismo. Por ejemplo, podemos imprimir el contenido de un objeto \textit{Array} de la siguiente forma:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+Array(0, 1, 2, 3, 4, 5).foreach(println)
+\end{lstlisting}
+
+obteniendo así el resultado esperado: 0, 1, 2, 3, 4 y 5. Si quisieramos hacerlo de forma paralela, solo debemos convertir el objeto \textit{Array} en un array paralelo, es decir, un \textit{ParArray}:
+
+\begin{lstlisting}[frame=single, basicstyle=\scriptsize, breaklines=true]
+Array(0, 1, 2, 3, 4, 5).par.foreach(println)
+\end{lstlisting}
+
+obteniendo así como resultado: 0, 3, 5, 4, 2 y 1.
+
+\subsection{Ausencia de Scala.} \label{subsec:ausencia}
+
+Finalmente, otro motivo por el cual se ha elegido \textit{Scala} como lenguaje para este proyecto es que no hay ninguna biblioteca tan compleja y que abarque tantos algoritmos de clasificación no balanceada escrita en \textit{Scala}.

@@ -1,0 +1,34 @@
+\chapter{Motivación e Introducción} \label{ch:introduction}
+
+Vivimos en una era de datos, una era en la que generamos miles de millones de datos cada día y una era en la que nos esforzamos por aprovechar dichos datos para nuestro beneficio. Es en el interés por aprovechar los datos que tenemos donde surge el \textit{Machine Learning}.
+
+\section{¿Qué es el aprendizaje automático?} \label{sec:machinelearning}
+
+El aprendizaje automático (del inglés, ``Machine Learning'') \cite{MLMurphy} es una rama de la inteligencia artificial cuyo objetivo es desarrollar técnicas que permitan a los ordenadores aprender. La idea es crear programas que sean capaces de abstraer las características y comportamientos a partir de una conjunto de datos proporcionados como ejemplos. Una vez dichos programas han aprendido, podemos usarlos para predecir el comportamiento de datos futuros de la misma fuente. El concepto predecir es ambiguo, pero podemos dividir los problemas en dos grupos según el concepto de predecir: problemas de clasificación y problemas de regresión.
+
+\begin{itemize}
+	\item \textbf{Clasificación.} En los problemas de clasificación se intenta predecir la clase de las instancias —una instancia es un dato—. La clase de una instancia se podría definir como el grupo al que pertenece una instancia. Un ejemplo clásico de un problema de clasificación es decidir si en una fotografía aparece una persona o no. Tendríamos un programa que, dado un conjunto sustancioso de fotos —algunas con personas y otras sin personas para poder aprender correctamente—, es capaz de extraer las características que le permitirán determinar en una foto nueva si aparece una persona o no. En este caso, tenemos dos posibles clases, \textit{persona} y \textit{no persona}. Este ejemplo es un problema de clasificación binaria, es decir, solo tenemos dos clases. En la vida real existen problemas de clasificación multiclase, es decir, problemas en los que las clases a predecir son más de dos.
+	\item \textbf{Regresión.} A diferencia de los problems de clasificación, los elementos del conjunto de datos no están etiquetados por una clase como tal, sino por ciertos valores. A la hora de predecir en los problemas de regresión tratamos de acercarnos lo máximo posible al valor real del dato con el que estamos trabajando. Un ejemplo clásico de un problema de regresión es el de predecir el valor de un objeto. En este caso no podemos decidir entre \textit{N} posibles precios —las que serían las \textit{N} clases en un problema de clasificación—, sino que debemos predecir un valor que sea totalmente nuevo para nuestro problema.
+\end{itemize}
+
+Este proyecto se centra en resolver problemas de clasificación binaria, es decir, conjuntos de datos en los que cada dato pertenece a una clase u otra.
+
+\section{¿Qué es clasificación no balanceada?} \label{sec:clasificacionnobalanceada}
+
+Cuando se intenta aprender de un conjunto de datos, el caso idílico es aquel en el que la distribución del número de instancias asociado a cada clase del problema es uniforme, es decir, tenemos un número similar de instancias para cada clase. Pero esto no siempre es así. Por ejemplo, pensemos en resolver el problema de clasificar una transacción bancaria como fraudulenta o no. Para resolver este problema, podemos pensar en resolverlo aplicando \textit{Machine Learning}. Para ello podemos pedirle a todos los bancos del mundo un listado de sus transacciones bancarias y la clase asociada a cada una de ellas: \textit{fraudulenta} o \textit{legal}. Si hacemos esto, seguramente tengamos un conjunto de datos bastante amplio. El problema reside en el número de transacciones fraudulentas existentes por cada número de transacciones legales. Este conjunto de datos tendrá muchas instancias asociadas a la clase \textit{legal} y muy pocas instancias asociadas a la clase \textit{fraudulenta}. Si en el problema al que nos enfrentamos la clase de interés —en este caso la clase \textit{fraudulenta}— tiene un número bastante menor de instancias que el resto de clase nos encontramos ante un problema de clasificación no balanceada.
+
+\section{¿Tiene solución?} \label{sec:solucionnobalanceada}
+
+\subsection{Técnicas de conjuntos.} \label{subsec:algorithmlevel}
+
+Esta vertiente busca modificar los algoritmos de clasificación existentes para adaptarlos a conjuntos de datos no balanceados. El objetivo principal de esta metodología es mejorar el rendimiento de los clasificadores. Para ello, se construyen varios subconjuntos de datos sobre los cuales se aprende un clasificador para cada uno de ellos y, finalmente, se combina el resultado de cada partición. En esta biblioteca se incluyen algoritmos que usan esta vertiente.
+
+\subsection{Solución a nivel de datos.} \label{subsec:datalevel}
+
+Este tipo de técnicas buscan equilibrar las clases en los datos de entrenamiento (preprocesamiento de datos) antes de proporcionar los datos al algoritmo de aprendizaje automático. El objetivo principal de equilibrar clases es aumentar la frecuencia de la clase minoritaria —técnica conocida como \textit{oversampling}— o disminuir la frecuencia de la clase mayoritaria —técnica conocida como \textit{undersampling}—. Ambas vertientes buscan obtener un conjunto de datos donde existe aproximadamente el mismo número de instancias para ambas clases. \\
+
+En este proyecto se ha optado por esta vertiente, en concreto por algoritmos de \textit{undersampling}. Hay que matizar que la mayoría de ellos busca reducir el número de instancias de la clase mayoritaria, pero también puede darse el caso de que alguno de ellos elimine también instancias minoritarias con idea de reducir el ruido o la redundancia de datos.
+
+\section{Motivación.} \label{sec:motivacion}
+
+Este proyecto surge debido a la necesidad de tener en una única biblioteca de software libre y código abierto —todo el código está disponible en mí GitHub \cite{undersampling-github} y la documentación se encuentra en \href{https://nestorrv.github.io}{https://nestorrv.github.io}— con la mayor cantidad de algoritmos de \textit{undersampling} posibles. También se ha hecho en un lenguaje de programación el cual está al alza y en el cuál no hay una biblioteca tan completa como esta para aprendizaje no balanceado. 

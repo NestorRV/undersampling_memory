@@ -1,0 +1,166 @@
+\documentclass[a4paper,11pt]{book}
+
+\usepackage{afterpage}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{amsmath}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[backend=bibtex8, sorting=none]{biblatex}
+\usepackage{booktabs}
+\usepackage{colortbl, longtable}
+\usepackage{dcolumn}
+\usepackage{fancyhdr}
+\usepackage{float}
+\usepackage[stable]{footmisc}
+\usepackage{graphicx}
+\usepackage{hvfloat}
+\usepackage[pdfborder={000}]{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{pdfpages}
+\usepackage{pgfgantt}
+\usepackage{pgf-umlcd}
+\usepackage{rotating}
+\usepackage{url}
+\usepackage{varwidth}
+
+\usetikzlibrary{babel}
+
+\decimalpoint
+\newcolumntype{.}{D{.}{\esperiod}{-1}}
+\makeatletter
+\addto\shorthandsspanish{\let\esperiod\es@period@code}
+\makeatother
+
+\newenvironment{codigo}
+ {\par\addvspace{\topsep}
+  \centering
+  \begin{minipage}{\linewidth}
+  \hrule\kern2pt}
+ {\par\kern2pt\hrule
+  \end{minipage}
+  \par\addvspace{\topsep}}
+
+\RequirePackage{verbatim}
+
+\newcommand{\myTitle}{undersampling\xspace}
+\newcommand{\myDegree}{Grado en Ingeniería Informática\xspace}
+\newcommand{\myName}{Néstor Rodríguez Vico\xspace}
+\newcommand{\myProf}{Alberto Fernández Hilario\xspace}
+\newcommand{\myOtherProf}{Salvador García López\xspace}
+\newcommand{\myFaculty}{Escuela Técnica Superior de Ingenierías Informática y de Telecomunicación\xspace}
+\newcommand{\myFacultyShort}{E.T.S. de Ingenierías Informática y de Telecomunicación\xspace}
+\newcommand{\myDepartment}{Departamento de Computación y Sistemas Inteligentes\xspace}
+\newcommand{\myUni}{\protect{Universidad de Granada}\xspace}
+\newcommand{\myLocation}{Granada\xspace}
+\newcommand{\myTime}{\today\xspace}
+
+\hypersetup{
+  pdfauthor = {\myName (nrv23@correo.ugr.es)},
+  pdftitle = {\myTitle},
+  pdfsubject = {},
+  pdfkeywords = {clasificación no balanceada, preprocesamiento, Scala, reducción de datos},
+  pdfcreator = {LaTeX},
+  pdfproducer = {pdflatex}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LO]{\leftmark}
+\fancyhead[RE]{\rightmark}
+\fancyhead[RO,LE]{\textbf{\thepage}}
+\renewcommand{\chaptermark}[1]{\markboth{\textbf{#1}}{}}
+\renewcommand{\sectionmark}[1]{\markright{\textbf{\thesection. #1}}}
+
+\setlength{\headheight}{1.5\headheight}
+
+\definecolor{gray97}{gray}{.97}
+\definecolor{gray75}{gray}{.75}
+\definecolor{gray45}{gray}{.45}
+\definecolor{gray30}{gray}{.94}
+
+\lstset{ frame=Ltb,
+  framerule=0.5pt,
+  aboveskip=0.5cm,
+  framextopmargin=3pt,
+  framexbottommargin=3pt,
+  framexleftmargin=0.1cm,
+  framesep=0pt,
+  rulesep=.4pt,
+  backgroundcolor=\color{gray97},
+  rulesepcolor=\color{black},
+  stringstyle=\ttfamily,
+  showstringspaces = false,
+  basicstyle=\scriptsize\ttfamily,
+  commentstyle=\color{gray45},
+  keywordstyle=\bfseries,
+  numbers=left,
+  numbersep=6pt,
+  numberstyle=\tiny,
+  numberfirstline = false,
+  breaklines=true,
+}
+ 
+% minimizar fragmentado de listados
+\lstnewenvironment{listing}[1][]{\lstset{#1}\pagebreak[0]}{\pagebreak[0]}
+
+\newcommand{\bigrule}{\titlerule[0.5mm]}
+
+%Para conseguir que en las páginas en blanco no ponga cabeceras
+\makeatletter
+\def\clearpage{
+  \ifvmode
+    \ifnum \@dbltopnum =\m@ne
+      \ifdim \pagetotal <\topskip
+        \hbox{}
+      \fi
+    \fi
+  \fi
+  \newpage
+  \thispagestyle{empty}
+  \write\m@ne{}
+  \vbox{}
+  \penalty -\@Mi
+}
+\makeatother
+
+\addbibresource{bibliografia.bib}
+
+\begin{document}
+\input{portada/portada}
+\input{prefacios/prefacio}
+%\frontmatter
+\tableofcontents
+\listoftables
+\listoffigures
+
+%\mainmatter
+%\setlength{\parskip}{5pt}
+
+\input{capitulos/01_Introduccion}
+\input{capitulos/02_Objetivos}
+\input{capitulos/03_Planificacion_Disenio}
+\input{capitulos/04_Algoritmos}
+\input{capitulos/05_Scala}
+\input{capitulos/06_Descripcion_Tecnica}
+\input{capitulos/07_Experimentacion}
+\input{capitulos/08_Conclusiones}
+\input{capitulos/09_Apendice}
+
+%\nocite{*}
+\addcontentsline{toc}{chapter}{Bibliografía}
+\printbibliography
+
+%\appendix
+%\input{apendices/manual_usuario/manual_usuario}
+%\input{apendices/paper/paper}
+%\input{glosario/entradas_glosario}
+%\addcontentsline{toc}{chapter}{Glosario}
+%\printglossary
+
+\chapter*{}
+\thispagestyle{empty}
+
+\end{document}
